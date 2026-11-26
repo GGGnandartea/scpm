@@ -555,7 +555,7 @@ $showContextHeader = false;
               <div class="field">
                 <label for="pk_id_user">ID User VIP Reseller (<code>id_user</code>)</label>
                 <div class="input-box">
-                  <input id="pk_id_user" name="pk_id_user" type="text" placeholder="Contoh: PK0012" value="<?= e($pkCreds['id_user']) ?>">
+                  <input id="pk_id_user" name="pk_id_user" type="text" autocomplete="off" placeholder="Contoh: PK0012" value="<?= e($pkCreds['id_user']) ?>">
                 </div>
               </div>
 
@@ -615,7 +615,7 @@ $showContextHeader = false;
                 <div class="field">
                   <label for="pg_slug">Project Slug (<code>slug</code>)</label>
                   <div class="input-box">
-                    <input id="pg_slug" name="pg_slug" type="text" placeholder="Contoh: stpreku" value="<?= e($pgCreds['slug']) ?>">
+                    <input id="pg_slug" name="pg_slug" type="text" autocomplete="off" placeholder="Contoh: stpreku" value="<?= e($pgCreds['slug']) ?>">
                   </div>
                 </div>
                 <div class="field">

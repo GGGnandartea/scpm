@@ -178,6 +178,22 @@ function pk_get_riwayat(int $limit = 50): array
 }
 
 /**
+ * Mengecek stok live 1 produk di PremiumKita (koneksi=get_stok_by_id).
+ */
+function pk_get_live_stock(string $idProduk): ?int
+{
+    $res = pk_call('get_stok_by_id', ['id_produk' => $idProduk]);
+    if (!$res['ok'] || !is_array($res['json'])) {
+        return null;
+    }
+    $first = $res['json'][0] ?? ($res['json']['data'][0] ?? null);
+    if (is_array($first) && isset($first['stok'])) {
+        return max(0, (int) $first['stok']);
+    }
+    return null;
+}
+
+/**
  * Memetakan nama produk & kategori dari PremiumKita ke tema kartu dan kategori toko lokal.
  *
  * @return array{brand_key:string, brand_label:string, group_slug:string, category:string, variant_label:string}
@@ -205,14 +221,38 @@ function pk_infer_product_meta(string $name, string $providerCategory): array
         'microsoft' => ['microsoft', 'Microsoft'],
         'zoom' => ['zoom', 'Zoom'],
         'camscanner' => ['camscanner', 'CamScanner'],
+        'avira' => ['nordvpn', 'Avira VPN'],
+        'hma' => ['nordvpn', 'HMA VPN'],
         'vpn' => ['nordvpn', 'VPN'],
         'beauty' => ['beauty', 'BeautyPlus'],
         'ebook' => ['ebook', 'E-Book'],
         'e-book' => ['ebook', 'E-Book'],
+        'wetv' => ['wetv', 'WeTV'],
+        'iqiyi' => ['iqiyi', 'iQIYI'],
+        'vidio' => ['vidio', 'Vidio'],
+        'prime video' => ['prime', 'Prime Video'],
+        'crunchyroll' => ['crunchyroll', 'Crunchyroll'],
+        'duolingo' => ['duolingo', 'Duolingo'],
+        'grammarly' => ['grammarly', 'Grammarly'],
+        'hbo' => ['hbo', 'HBO Max'],
+        'loklok' => ['loklok', 'Loklok'],
+        'meitu' => ['meitu', 'Meitu'],
+        'piscart' => ['picsart', 'Picsart'],
+        'picsart' => ['picsart', 'Picsart'],
+        'remini' => ['remini', 'Remini'],
+        'scribd' => ['scribd', 'Scribd'],
+        'viki' => ['viki', 'Viki'],
+        'vision+' => ['vision', 'Vision+'],
+        'vsco' => ['vsco', 'VSCO'],
+        'wattpad' => ['wattpad', 'Wattpad'],
+        'wink' => ['wink', 'Wink'],
+        'youku' => ['youku', 'Youku'],
+        'ibis' => ['ibis', 'ibisPaint'],
+        'gagaoolala' => ['gagaoolala', 'GagaOOLala'],
     ];
 
     $brandKey = 'nutrya';
-    $brandLabel = 'Digital';
+    $brandLabel = ucfirst(explode(' ', trim($name))[0] ?? 'Digital');
     foreach ($brandMap as $needle => [$bKey, $bLabel]) {
         if (str_contains($lower, $needle)) {
             $brandKey = $bKey;
@@ -221,30 +261,51 @@ function pk_infer_product_meta(string $name, string $providerCategory): array
         }
     }
 
+    // Jika tidak ada tema SVG khusus, tetap pakai 'nutrya' sebagai CSS theme agar aman,
+    // sementara brandLabel dan icon_url tampil rapi.
+    $svgSupported = [
+        'netflix','spotify','youtube','canva','openai','capcut','adobe','alight',
+        'apple','bstation','disney','viu','gemini','claude','microsoft','zoom',
+        'camscanner','nordvpn','beauty','ebook',
+    ];
+    $cssBrandKey = in_array($brandKey, $svgSupported, true) ? $brandKey : 'nutrya';
+
     $catLower = mb_strtolower($providerCategory);
     if (str_contains($lower, 'spotify') || str_contains($lower, 'apple music') || str_contains($catLower, 'musik')) {
         $category = 'Musik';
-    } elseif (str_contains($lower, 'canva') || str_contains($lower, 'capcut') || str_contains($lower, 'adobe') || str_contains($lower, 'alight') || str_contains($catLower, 'edit') || str_contains($catLower, 'desain')) {
+    } elseif (
+        str_contains($lower, 'canva') || str_contains($lower, 'capcut') || str_contains($lower, 'adobe')
+        || str_contains($lower, 'lightroom') || str_contains($lower, 'alight') || str_contains($lower, 'meitu')
+        || str_contains($lower, 'picsart') || str_contains($lower, 'piscart') || str_contains($lower, 'remini')
+        || str_contains($lower, 'vsco') || str_contains($lower, 'wink') || str_contains($lower, 'ibis')
+        || str_contains($lower, 'beauty') || str_contains($catLower, 'edit') || str_contains($catLower, 'desain')
+    ) {
         $category = 'Desain & Editing';
-    } elseif (str_contains($lower, 'chatgpt') || str_contains($lower, 'gemini') || str_contains($lower, 'claude') || str_contains($lower, 'zoom') || str_contains($lower, 'microsoft') || str_contains($lower, 'vpn') || str_contains($catLower, 'ai') || str_contains($catLower, 'produk')) {
+    } elseif (
+        str_contains($lower, 'chatgpt') || str_contains($lower, 'gemini') || str_contains($lower, 'claude')
+        || str_contains($lower, 'zoom') || str_contains($lower, 'microsoft') || str_contains($lower, 'vpn')
+        || str_contains($lower, 'grammarly') || str_contains($lower, 'duolingo') || str_contains($lower, 'camscanner')
+        || str_contains($catLower, 'ai') || str_contains($catLower, 'produk')
+    ) {
         $category = 'AI & Produktivitas';
-    } elseif (str_contains($lower, 'ebook') || str_contains($lower, 'e-book') || str_contains($lower, 'novel')) {
+    } elseif (
+        str_contains($lower, 'ebook') || str_contains($lower, 'e-book') || str_contains($lower, 'novel')
+        || str_contains($lower, 'scribd') || str_contains($lower, 'wattpad') || str_contains($catLower, 'e-book')
+    ) {
         $category = 'E-Book & Lainnya';
     } else {
         $category = 'Streaming';
     }
 
     $variant = 'PAKET STANDAR';
-    if (preg_match('/(\d+\s*(?:bulan|bln|hari|day|tahun|thn|minggu))/i', $name, $m)) {
+    if (preg_match('/(\d+\s*(?:-\s*\d+\s*)?(?:bulan|bln|hari|day|d|tahun|thn|minggu))/i', $name, $m)) {
         $variant = strtoupper(trim($m[1]));
     }
 
-    $groupSlug = $brandKey !== 'nutrya'
-        ? $brandKey
-        : (preg_replace('/[^a-z0-9]+/', '-', mb_strtolower(explode(' ', trim($name))[0] ?? 'pk')) ?: 'pk');
+    $groupSlug = preg_replace('/[^a-z0-9]+/', '-', mb_strtolower($brandLabel)) ?: 'pk';
 
     return [
-        'brand_key' => $brandKey,
+        'brand_key' => $cssBrandKey,
         'brand_label' => $brandLabel,
         'group_slug' => trim($groupSlug, '-'),
         'category' => $category,

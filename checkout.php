@@ -40,6 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $qty = max(1, min(20, (int) ($_POST['quantity'] ?? 1)));
     $stock = (int) $product['stock'];
+    if (($product['provider_source'] ?? 'local') === 'premiumkita' && (pk_get_credentials($settings)['enabled'] ?? false)) {
+        $liveStock = pk_get_live_stock((string) $product['provider_product_id']);
+        if ($liveStock !== null) {
+            $stock = $liveStock;
+            get_db()->prepare('UPDATE products SET stock = ? WHERE id = ?')->execute([$stock, (int) $product['id']]);
+        }
+    }
     if ($stock <= 0) {
         $errors[] = 'Maaf, stok produk ini sedang habis.';
     } elseif ($qty > $stock) {
