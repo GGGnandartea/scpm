@@ -1,0 +1,12 @@
+# Database SQLite runtime (otomatis dibuat & di-seed saat pertama dibuka)
+data/store.db
+data/store.db-*
+*.sqlite
+*.db-shm
+*.db-wal
+
+# Environment & log lokal
+.env
+*.log
+.DS_Store
+Thumbs.db
